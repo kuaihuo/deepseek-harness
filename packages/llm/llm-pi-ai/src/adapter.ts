@@ -95,6 +95,13 @@ function profileOptions(
     ...enabledReasoning === undefined ? {} : { reasoning: enabledReasoning },
     ...profile.thinkingBudgets === undefined ? {} : { thinkingBudgets: profile.thinkingBudgets },
     ...profile.cacheRetention === undefined ? {} : { cacheRetention: profile.cacheRetention },
+    ...profile.extraBody === undefined ? {} : {
+      // `onPayload` receives the protocol's assembled request body right before
+      // sending. extraBody is deployment-owned, so its keys win; the cast
+      // narrows pi-ai's `unknown` payload to the JSON object every protocol
+      // body is, which is all the spread needs.
+      onPayload: (payload: unknown): unknown => ({ ...(payload as Record<string, unknown>), ...profile.extraBody }),
+    },
     ...profile.transport === undefined ? {} : { transport: profile.transport },
     ...profile.timeoutMs === undefined ? {} : { timeoutMs: profile.timeoutMs },
     ...profile.websocketConnectTimeoutMs === undefined ? {} : { websocketConnectTimeoutMs: profile.websocketConnectTimeoutMs },
