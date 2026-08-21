@@ -142,6 +142,14 @@ export interface PiAiProviderProfile {
   defaultInput?: PiAiModality[]
   /** Provider request headers; Harness attribution wins reserved names. */
   headers?: Record<string, string>
+  /**
+   * Fields merged into every outgoing request body for this route's models,
+   * after the adapter assembles it. Escape for gateways that require a field
+   * no switch names, such as `user` for per-user accounting. Same-named keys
+   * overwrite adapter values, so a key the protocol owns can corrupt the
+   * request, and a key the endpoint rejects fails that request.
+   */
+  extraBody?: Record<string, unknown>
   /** Provider-neutral pi-ai reasoning level. */
   reasoning?: ModelThinkingLevel
   /** Token budgets used by reasoning providers that support them. */
@@ -304,6 +312,7 @@ const profile = z.object({
   defaultMaxTokens: z.number().step(1).min(1).default(DEFAULT_MAX_TOKENS),
   defaultInput: z.array(z.union(MODALITIES)).default([...DEFAULT_INPUT]),
   headers: z.dict(z.string()),
+  extraBody: z.dict(z.any()),
   reasoning: z.union(THINKING_LEVELS),
   thinkingBudgets,
   cacheRetention: z.union(['none', 'short', 'long']),

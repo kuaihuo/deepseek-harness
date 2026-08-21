@@ -70,4 +70,30 @@ describe('pi-ai SDK retry boundary', () => {
       maxTokens: 1024,
     })
   })
+
+  it('merges a route extraBody into the payload pi-ai is about to send', async () => {
+    streamSimple.mockImplementation(() => { throw new Error('mock SDK boundary') })
+
+    const adapter = new PiAiAdapter({
+      profiles: () => resolveProfiles({
+        'local-gateway': {
+          api: 'openai-completions',
+          baseURL: 'http://127.0.0.1:9/v1',
+          extraBody: { user: 'acct-42' },
+          models: [{ id: 'local-model', contextWindow: 8192, maxTokens: 1024 }],
+        },
+      }),
+      resolveApiKey: () => Promise.resolve('test-key'),
+    })
+    await drain(adapter)
+
+    const options = streamSimple.mock.calls[0]?.[2] as { onPayload?: (payload: unknown) => unknown }
+    expect(options.onPayload).toBeTypeOf('function')
+    // A same-named key the deployment sets wins over the assembled body.
+    expect(options.onPayload!({ model: 'local-model', user: 'assembled', messages: [] })).toEqual({
+      model: 'local-model',
+      user: 'acct-42',
+      messages: [],
+    })
+  })
 })
