@@ -73,13 +73,20 @@ describe('PiAiAdapter provider routing', () => {
     expect(server.paths).toEqual(['/chat/completions'])
   })
 
-  it('merges profile headers with Harness attribution winning', async () => {
+  it('lets a route-declared User-Agent override Harness attribution for client-whitelisting gateways', async () => {
     const server = await mockServer([{ events: textEvents }])
     const ctx = await harness(server.url, {
-      headers: { 'x-company': 'private', 'User-Agent': 'wrong' },
+      headers: { 'x-company': 'private', 'User-Agent': 'claude-cli/1.0.128 (external, cli)' },
     })
     await assemble(ctx, { model: 'deepseek-v4-flash', messages: [] })
     expect(server.headers[0]?.['x-company']).toBe('private')
+    expect(server.headers[0]?.['user-agent']).toBe('claude-cli/1.0.128 (external, cli)')
+  })
+
+  it('sends Harness attribution when the route declares no User-Agent', async () => {
+    const server = await mockServer([{ events: textEvents }])
+    const ctx = await harness(server.url, { headers: { 'x-company': 'private' } })
+    await assemble(ctx, { model: 'deepseek-v4-flash', messages: [] })
     expect(server.headers[0]?.['user-agent']).toBe(userAgent())
   })
 

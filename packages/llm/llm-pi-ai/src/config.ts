@@ -140,7 +140,11 @@ export interface PiAiProviderProfile {
    * to answer instead.
    */
   defaultInput?: PiAiModality[]
-  /** Provider request headers; Harness attribution wins reserved names. */
+  /**
+   * Provider request headers. Harness attribution wins reserved names except
+   * `User-Agent`: a route that states its own names a client-whitelisting
+   * gateway's requirement, so it wins.
+   */
   headers?: Record<string, string>
   /**
    * Fields merged into every outgoing request body for this route's models,

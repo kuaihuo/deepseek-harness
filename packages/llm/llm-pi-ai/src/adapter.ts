@@ -180,13 +180,23 @@ function reasoningInfo(
   }
 }
 
-/** Merge deployment headers while removing case-insensitive attribution collisions. */
+/**
+ * Merge deployment headers over Harness attribution. A gateway that
+ * whitelists clients by `User-Agent` (agentrouter-style claude-cli relays)
+ * refuses the harness identity outright, so a route that states its own
+ * `User-Agent` is declaring that gateway's requirement and wins; every other
+ * attribution name stays Harness-owned.
+ */
 function requestHeaders(headers: Readonly<Record<string, string>> | undefined): Record<string, string> {
   const attribution = attributionHeaders()
   const reserved = new Set(Object.keys(attribution).map(name => name.toLowerCase()))
+  const declared = Object.fromEntries(
+    Object.entries(headers ?? {}).filter(([name]) => name.toLowerCase() === 'user-agent'),
+  )
   return {
     ...Object.fromEntries(Object.entries(headers ?? {}).filter(([name]) => !reserved.has(name.toLowerCase()))),
     ...attribution,
+    ...declared,
   }
 }
 
